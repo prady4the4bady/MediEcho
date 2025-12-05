@@ -18,6 +18,9 @@ dotenv.config();
 // Create Express app
 const app = express();
 
+// Trust proxy for Vercel/serverless deployments
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: false, // Disable CSP for API
@@ -34,7 +37,8 @@ app.use(cors({
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again later."
+  message: "Too many requests from this IP, please try again later.",
+  validate: { xForwardedForHeader: false }
 });
 app.use("/api/", limiter);
 
@@ -42,7 +46,8 @@ app.use("/api/", limiter);
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // limit each IP to 5 auth requests per windowMs
-  message: "Too many authentication attempts, please try again later."
+  message: "Too many authentication attempts, please try again later.",
+  validate: { xForwardedForHeader: false }
 });
 app.use("/api/auth", authLimiter);
 
