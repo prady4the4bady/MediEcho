@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const response = await api.get('/auth/me');
-      setUser(response.data);
+      setUser(response.data.data.user);
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { token, user: userData } = response.data;
+      const { token, user: userData } = response.data.data;
       
       localStorage.setItem('token', token);
       setUser(userData);
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Login failed' 
+        error: error.response?.data?.error || 'Login failed' 
       };
     }
   };
@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password) => {
     try {
       const response = await api.post('/auth/register', { name, email, password });
-      const { token, user: userData } = response.data;
+      const { token, user: userData } = response.data.data;
       
       localStorage.setItem('token', token);
       setUser(userData);
@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Registration failed' 
+        error: error.response?.data?.error || 'Registration failed' 
       };
     }
   };
@@ -91,8 +91,8 @@ export const AuthProvider = ({ children }) => {
   const refreshUser = async () => {
     try {
       const response = await api.get('/auth/me');
-      setUser(response.data);
-      return response.data;
+      setUser(response.data.data.user);
+      return response.data.data.user;
     } catch (error) {
       console.error('Failed to refresh user:', error);
       return null;
