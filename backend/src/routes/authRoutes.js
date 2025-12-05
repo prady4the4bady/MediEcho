@@ -1,6 +1,6 @@
 import express from "express";
 import { body } from "express-validator";
-import { register, login, getMe, refreshToken } from "../controllers/authController.js";
+import { register, login, getMe, refreshToken, updatePreferences } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -22,5 +22,6 @@ router.post("/register", registerValidation, register);
 router.post("/login", loginValidation, login);
 router.post("/refresh", refreshToken);
 router.get("/me", protect, getMe);
+router.put("/preferences", protect, updatePreferences);
 
 export default router;

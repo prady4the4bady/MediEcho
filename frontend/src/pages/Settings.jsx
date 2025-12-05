@@ -157,7 +157,11 @@ export default function Settings() {
       const data = await createCustomerPortal();
       window.location.href = data.url;
     } catch (error) {
-      setError('Failed to open billing portal');
+      if (error.response?.status === 400) {
+        setError('No active subscription found. Subscribe to a plan first to manage billing.');
+      } else {
+        setError('Failed to open billing portal');
+      }
     }
   };
 

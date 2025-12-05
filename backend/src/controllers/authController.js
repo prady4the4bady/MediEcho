@@ -187,3 +187,47 @@ export const refreshToken = async (req, res) => {
     });
   }
 };
+
+// @desc    Update user preferences
+// @route   PUT /api/auth/preferences
+// @access  Private
+export const updatePreferences = async (req, res) => {
+  try {
+    const { emailNotifications, weeklyReminders, briefNotifications, darkMode, autoTranscribe, dataRetention } = req.body;
+
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found"
+      });
+    }
+
+    // Update settings
+    user.settings = {
+      ...user.settings,
+      notifications: emailNotifications !== undefined ? emailNotifications : user.settings?.notifications,
+      weeklyReminders: weeklyReminders !== undefined ? weeklyReminders : user.settings?.weeklyReminders,
+      briefNotifications: briefNotifications !== undefined ? briefNotifications : user.settings?.briefNotifications,
+      darkMode: darkMode !== undefined ? darkMode : user.settings?.darkMode,
+      autoTranscribe: autoTranscribe !== undefined ? autoTranscribe : user.settings?.autoTranscribe,
+      dataRetention: dataRetention || user.settings?.dataRetention
+    };
+
+    await user.save();
+
+    res.json({
+      success: true,
+      data: {
+        settings: user.settings
+      }
+    });
+  } catch (err) {
+    console.error("Update preferences error:", err);
+    res.status(500).json({
+      success: false,
+      error: "Server error updating preferences"
+    });
+  }
+};

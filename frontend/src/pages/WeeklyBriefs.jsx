@@ -303,7 +303,12 @@ export default function WeeklyBriefs() {
       setCanGenerate(false);
     } catch (error) {
       console.error('Failed to generate brief:', error);
-      alert(error.response?.data?.error || 'Failed to generate brief. You need at least 3 logs this week.');
+      const errorMessage = error.response?.data?.error || error.message;
+      if (error.response?.status === 403) {
+        alert('Weekly briefs require a Pro or Coach subscription. Upgrade to access this feature!');
+      } else {
+        alert(errorMessage || 'Failed to generate brief. You need at least 3 logs this week.');
+      }
     } finally {
       setGenerating(false);
     }

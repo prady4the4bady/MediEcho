@@ -20,10 +20,15 @@ router.get('/', protect, async (req, res) => {
       .sort({ weekEndDate: -1 })
       .limit(20);
 
-    res.json(briefs);
+    res.json({
+      success: true,
+      data: {
+        briefs
+      }
+    });
   } catch (error) {
     console.error('Error fetching briefs:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -51,7 +56,7 @@ router.get('/:id', protect, async (req, res) => {
 // @desc    Download brief PDF
 // @route   GET /api/briefs/:id/download
 // @access  Private (Pro subscription required)
-router.get('/:id/download', protect, requireSubscription(['pro', 'premium']), async (req, res) => {
+router.get('/:id/download', protect, requireSubscription(['pro', 'coach']), async (req, res) => {
   try {
     const brief = await WeeklyBrief.findOne({
       _id: req.params.id,
@@ -80,7 +85,7 @@ router.get('/:id/download', protect, requireSubscription(['pro', 'premium']), as
 // @desc    Generate a new weekly brief
 // @route   POST /api/briefs/generate
 // @access  Private (Pro subscription required)
-router.post('/generate', protect, requireSubscription(['pro', 'premium']), async (req, res) => {
+router.post('/generate', protect, requireSubscription(['pro', 'coach']), async (req, res) => {
   try {
     const { weekStartDate, weekEndDate } = req.body;
     
