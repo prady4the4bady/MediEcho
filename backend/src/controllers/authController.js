@@ -140,6 +140,8 @@ export const getMe = async (req, res) => {
           name: user.name,
           subscriptionStatus: user.subscriptionStatus,
           subscriptionPlan: user.subscriptionPlan,
+          subscriptionEndDate: user.subscriptionEndDate,
+          stripeCustomerId: user.stripeCustomerId ? true : false, // Just boolean for privacy
           settings: user.settings,
           createdAt: user.createdAt
         }

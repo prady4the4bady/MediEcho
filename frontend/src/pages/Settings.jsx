@@ -252,22 +252,33 @@ export default function Settings() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white font-medium capitalize">
-                  {user.subscription?.plan || 'Free'} Plan
+                  {user.subscriptionPlan || user.subscription?.plan || 'Free'} Plan
                 </p>
                 <p className="text-sm text-slate-400">
-                  {user.subscription?.status === 'active' 
-                    ? `Renews on ${new Date(user.subscription.currentPeriodEnd).toLocaleDateString()}`
+                  {(user.subscriptionStatus === 'active' || user.subscription?.status === 'active')
+                    ? `Renews on ${new Date(user.subscriptionEndDate || user.subscription?.currentPeriodEnd).toLocaleDateString()}`
                     : 'No active subscription'
                   }
                 </p>
               </div>
-              <button
-                onClick={handleManageSubscription}
-                className="btn-secondary flex items-center gap-2"
-              >
-                Manage Billing
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'trialing' || 
+                user.subscription?.status === 'active' || user.stripeCustomerId) ? (
+                <button
+                  onClick={handleManageSubscription}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  Manage Billing
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/pricing')}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  Upgrade Plan
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
 
