@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Star, Zap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { createCheckoutSession } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 // Stripe Price IDs - these should match your backend .env
 const PRICE_IDS = {
@@ -11,6 +13,8 @@ const PRICE_IDS = {
 
 const PricingPage = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const plans = [
     {
@@ -70,6 +74,14 @@ const PricingPage = () => {
 
   const handleUpgrade = async (priceId) => {
     if (!priceId) return; // Free plan
+    
+    // Check if user is logged in
+    if (!isAuthenticated) {
+      alert('Please log in first to upgrade your plan.');
+      navigate('/login');
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const data = await createCheckoutSession(priceId);
@@ -81,7 +93,12 @@ const PricingPage = () => {
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      alert('Failed to start checkout. Please try again.');
+      if (error.response?.status === 401) {
+        alert('Your session has expired. Please log in again.');
+        navigate('/login');
+      } else {
+        alert('Failed to start checkout. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
