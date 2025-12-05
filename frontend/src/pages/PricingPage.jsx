@@ -72,10 +72,10 @@ const PricingPage = () => {
     if (!priceId) return; // Free plan
     setIsLoading(true);
     try {
-      const response = await createCheckoutSession(priceId);
+      const data = await createCheckoutSession(priceId);
       // Redirect to Stripe Checkout
-      if (response.data?.url) {
-        window.location.href = response.data.url;
+      if (data?.url) {
+        window.location.href = data.url;
       } else {
         throw new Error('No checkout URL returned');
       }

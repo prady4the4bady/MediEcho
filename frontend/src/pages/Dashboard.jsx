@@ -16,7 +16,7 @@ import {
   AlertCircle,
   ChevronRight
 } from 'lucide-react';
-import api from '../utils/api';
+import { getLogs, getWeeklyBriefs, getMe } from '../utils/api';
 import Header from '../components/Header';
 
 const Dashboard = () => {
@@ -31,14 +31,14 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [logsResponse, briefsResponse, userResponse] = await Promise.all([
-        api.get('/logs').catch(() => ({ data: [] })),
-        api.get('/briefs').catch(() => ({ data: [] })),
-        api.get('/auth/me').catch(() => ({ data: null }))
+      const [logsData, briefsData, userData] = await Promise.all([
+        getLogs().catch(() => []),
+        getWeeklyBriefs().catch(() => []),
+        getMe().catch(() => null)
       ]);
-      setLogs(logsResponse.data || []);
-      setBriefs(briefsResponse.data || []);
-      setUser(userResponse.data);
+      setLogs(logsData || []);
+      setBriefs(briefsData || []);
+      setUser(userData?.user || userData);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {

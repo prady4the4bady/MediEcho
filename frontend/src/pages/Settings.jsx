@@ -15,7 +15,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import api, { getMe, createCustomerPortal } from '../utils/api';
 import Header from '../components/Header';
 
 export default function Settings() {
@@ -53,10 +53,11 @@ export default function Settings() {
   const fetchUserData = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/auth/me');
-      setUser(response.data);
-      if (response.data.preferences) {
-        setPreferences(prev => ({ ...prev, ...response.data.preferences }));
+      const userData = await getMe();
+      const userInfo = userData.user || userData;
+      setUser(userInfo);
+      if (userInfo.preferences) {
+        setPreferences(prev => ({ ...prev, ...userInfo.preferences }));
       }
     } catch (error) {
       console.error('Failed to fetch user data:', error);
@@ -153,8 +154,8 @@ export default function Settings() {
 
   const handleManageSubscription = async () => {
     try {
-      const response = await api.post('/payments/create-portal-session');
-      window.location.href = response.data.url;
+      const data = await createCustomerPortal();
+      window.location.href = data.url;
     } catch (error) {
       setError('Failed to open billing portal');
     }

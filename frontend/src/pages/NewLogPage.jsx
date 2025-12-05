@@ -40,7 +40,7 @@ const NewLogPage = () => {
         navigate('/dashboard');
       }, 1500);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save log. Please try again.');
+      setError(err.response?.data?.error || 'Failed to save log. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

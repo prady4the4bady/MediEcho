@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../utils/api';
+import api, { getMe as fetchMe, login as apiLogin, register as apiRegister } from '../utils/api';
 
 const AuthContext = createContext(null);
 
@@ -30,8 +30,8 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const response = await api.get('/auth/me');
-      setUser(response.data.data.user);
+      const data = await fetchMe();
+      setUser(data.user || data);
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -44,8 +44,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await api.post('/auth/login', { email, password });
-      const { token, user: userData } = response.data.data;
+      const data = await apiLogin({ email, password });
+      const { token, user: userData } = data;
       
       localStorage.setItem('token', token);
       setUser(userData);
@@ -62,8 +62,8 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password) => {
     try {
-      const response = await api.post('/auth/register', { name, email, password });
-      const { token, user: userData } = response.data.data;
+      const data = await apiRegister({ name, email, password });
+      const { token, user: userData } = data;
       
       localStorage.setItem('token', token);
       setUser(userData);
@@ -90,9 +90,9 @@ export const AuthProvider = ({ children }) => {
 
   const refreshUser = async () => {
     try {
-      const response = await api.get('/auth/me');
-      setUser(response.data.data.user);
-      return response.data.data.user;
+      const data = await fetchMe();
+      setUser(data.user || data);
+      return data.user || data;
     } catch (error) {
       console.error('Failed to refresh user:', error);
       return null;

@@ -15,7 +15,7 @@ import {
   Loader2,
   CheckCircle
 } from 'lucide-react';
-import api from '../utils/api';
+import api, { getWeeklyBriefs, getLogs, generateBrief, downloadBrief } from '../utils/api';
 import Header from '../components/Header';
 
 const BriefCard = ({ brief, onDelete, onDownload, onView }) => {
@@ -273,8 +273,8 @@ export default function WeeklyBriefs() {
   const fetchBriefs = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/briefs');
-      setBriefs(response.data);
+      const briefsData = await getWeeklyBriefs();
+      setBriefs(briefsData || []);
     } catch (error) {
       console.error('Failed to fetch briefs:', error);
     } finally {
@@ -285,11 +285,10 @@ export default function WeeklyBriefs() {
   const checkCanGenerate = async () => {
     try {
       // Check if user has enough logs this week and hasn't already generated
-      const response = await api.get('/logs');
-      const logs = response.data;
+      const logs = await getLogs();
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
-      const thisWeekLogs = logs.filter(l => new Date(l.createdAt) > weekAgo);
+      const thisWeekLogs = (logs || []).filter(l => new Date(l.createdAt) > weekAgo);
       setCanGenerate(thisWeekLogs.length >= 3);
     } catch (error) {
       setCanGenerate(false);
@@ -299,12 +298,12 @@ export default function WeeklyBriefs() {
   const handleGenerate = async () => {
     try {
       setGenerating(true);
-      const response = await api.post('/briefs/generate');
-      setBriefs([response.data, ...briefs]);
+      const newBrief = await generateBrief();
+      setBriefs([newBrief, ...briefs]);
       setCanGenerate(false);
     } catch (error) {
       console.error('Failed to generate brief:', error);
-      alert(error.response?.data?.message || 'Failed to generate brief. You need at least 3 logs this week.');
+      alert(error.response?.data?.error || 'Failed to generate brief. You need at least 3 logs this week.');
     } finally {
       setGenerating(false);
     }
@@ -323,10 +322,8 @@ export default function WeeklyBriefs() {
 
   const handleDownload = async (briefId) => {
     try {
-      const response = await api.get(`/briefs/${briefId}/download`, {
-        responseType: 'blob'
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const blobData = await downloadBrief(briefId);
+      const url = window.URL.createObjectURL(new Blob([blobData]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `weekly-brief-${briefId}.pdf`);

@@ -16,7 +16,7 @@ import {
   Eye,
   Clock
 } from 'lucide-react';
-import api from '../utils/api';
+import { getLogs, deleteLog } from '../utils/api';
 import Header from '../components/Header';
 
 const LOG_TYPES = [
@@ -242,8 +242,8 @@ export default function LogHistory() {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/logs');
-      setLogs(response.data);
+      const logsData = await getLogs();
+      setLogs(logsData || []);
     } catch (error) {
       console.error('Failed to fetch logs:', error);
     } finally {
@@ -255,7 +255,7 @@ export default function LogHistory() {
     if (!window.confirm('Are you sure you want to delete this log?')) return;
     
     try {
-      await api.delete(`/logs/${logId}`);
+      await deleteLog(logId);
       setLogs(logs.filter(l => l._id !== logId));
     } catch (error) {
       console.error('Failed to delete log:', error);
