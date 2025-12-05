@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
-import { login } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -28,11 +29,14 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const response = await login(formData);
-      localStorage.setItem('token', response.token);
-      navigate('/dashboard');
+      const result = await login(formData.email, formData.password);
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        setError(result.error || 'Login failed. Please try again.');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

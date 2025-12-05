@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
-import { register } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -46,17 +47,17 @@ const RegisterPage = () => {
     setError('');
 
     try {
-      await register({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password
-      });
-      setSuccess(true);
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+      const result = await register(formData.name, formData.email, formData.password);
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+      } else {
+        setError(result.error || 'Registration failed. Please try again.');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setError('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
