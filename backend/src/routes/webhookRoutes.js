@@ -24,12 +24,48 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
         const session = event.data.object;
         console.log("Checkout session completed:", session.id);
 
-        // Find user by customer ID
-        const user = await User.findOne({ stripeCustomerId: session.customer });
+        // Find user by customer ID or metadata
+        let user = await User.findOne({ stripeCustomerId: session.customer });
+        
+        if (!user && session.metadata?.userId) {
+          user = await User.findById(session.metadata.userId);
+          if (user) {
+            user.stripeCustomerId = session.customer;
+          }
+        }
+        
         if (user) {
-          // Update user subscription status
           user.subscriptionStatus = "active";
+          user.stripeSubscriptionId = session.subscription;
+          
+          // Fetch subscription to get price details
+          if (session.subscription) {
+            try {
+              const subscription = await stripe.subscriptions.retrieve(session.subscription);
+              const priceId = subscription.items.data[0]?.price.id;
+              user.subscriptionEndDate = new Date(subscription.current_period_end * 1000);
+              
+              // Map price ID to plan
+              const coachPriceIds = [
+                process.env.STRIPE_PRICE_COACH_MONTHLY,
+                process.env.STRIPE_PRICE_COACH_YEARLY,
+                'price_1SaWrqPq3dHffIt63pt2sBEY',
+                'price_1SaWrqPq3dHffIt6tt3zLBbH'
+              ];
+              
+              if (coachPriceIds.includes(priceId)) {
+                user.subscriptionPlan = "coach";
+              } else {
+                user.subscriptionPlan = "pro";
+              }
+            } catch (e) {
+              console.error("Error fetching subscription details:", e);
+              user.subscriptionPlan = "pro"; // Default to pro
+            }
+          }
+          
           await user.save();
+          console.log(`Checkout completed for ${user.email}, plan: ${user.subscriptionPlan}`);
         }
         break;
       }
@@ -67,18 +103,34 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
         if (user) {
           user.subscriptionStatus = subscription.status;
           user.stripeSubscriptionId = subscription.id;
+          user.subscriptionEndDate = new Date(subscription.current_period_end * 1000);
 
           // Map Stripe price ID to plan name
           const priceId = subscription.items.data[0]?.price.id;
           if (priceId) {
-            if (priceId.includes("coach")) {
+            // Check against your actual price IDs
+            const proPriceIds = [
+              process.env.STRIPE_PRICE_PRO_MONTHLY,
+              process.env.STRIPE_PRICE_PRO_YEARLY,
+              'price_1SaWq0Pq3dHffIt6lCqFbLDN', // Pro Monthly
+              'price_1SaWq0Pq3dHffIt6amyRgVJG'  // Pro Yearly
+            ];
+            const coachPriceIds = [
+              process.env.STRIPE_PRICE_COACH_MONTHLY,
+              process.env.STRIPE_PRICE_COACH_YEARLY,
+              'price_1SaWrqPq3dHffIt63pt2sBEY', // Coach Monthly
+              'price_1SaWrqPq3dHffIt6tt3zLBbH'  // Coach Yearly
+            ];
+
+            if (coachPriceIds.includes(priceId)) {
               user.subscriptionPlan = "coach";
-            } else if (priceId.includes("pro")) {
+            } else if (proPriceIds.includes(priceId)) {
               user.subscriptionPlan = "pro";
             }
           }
 
           await user.save();
+          console.log(`Updated user ${user.email} to plan: ${user.subscriptionPlan}, status: ${user.subscriptionStatus}`);
         }
         break;
       }

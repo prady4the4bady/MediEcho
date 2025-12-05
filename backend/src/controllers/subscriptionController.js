@@ -34,6 +34,8 @@ export const createCheckoutSession = async (req, res) => {
     }
 
     // Create checkout session
+    const frontendUrl = process.env.FRONTEND_URL || process.env.APP_URL || 'https://mediecho.vercel.app';
+    
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
@@ -45,8 +47,8 @@ export const createCheckoutSession = async (req, res) => {
       metadata: {
         userId: user._id.toString()
       },
-      success_url: successUrl || `${process.env.APP_URL}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl || `${process.env.APP_URL}/subscription/failure`,
+      success_url: successUrl || `${frontendUrl}/dashboard?payment=success`,
+      cancel_url: cancelUrl || `${frontendUrl}/pricing?payment=cancelled`,
       allow_promotion_codes: true
     });
 
