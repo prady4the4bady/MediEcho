@@ -28,9 +28,26 @@ app.use(helmet({
 }));
 
 // CORS configuration
+const allowedOrigins = [
+  process.env.APP_URL,
+  "http://localhost:3000",
+  "https://mediecho.vercel.app",
+  "https://frontend-pradyun4kumar4sinha4-gmailcoms-projects.vercel.app"
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.APP_URL || "http://localhost:3000",
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all origins for now
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Rate limiting
