@@ -74,16 +74,26 @@ export const createCustomerPortal = async (req, res) => {
     const { returnUrl } = req.body;
     const user = await User.findById(req.user._id);
 
-    if (!user || !user.stripeCustomerId) {
-      return res.status(400).json({
+    if (!user) {
+      return res.status(404).json({
         success: false,
-        error: "No active subscription found"
+        error: "User not found"
       });
     }
 
+    if (!user.stripeCustomerId) {
+      return res.status(400).json({
+        success: false,
+        error: "No Stripe customer found. Please subscribe to a plan first."
+      });
+    }
+
+    // Use frontend URL for return, fallback to APP_URL or a sensible default
+    const portalReturnUrl = returnUrl || process.env.FRONTEND_URL || process.env.APP_URL || 'https://mediecho.vercel.app/settings';
+
     const session = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
-      return_url: returnUrl || `${process.env.APP_URL}/dashboard`
+      return_url: portalReturnUrl
     });
 
     res.json({
@@ -93,7 +103,24 @@ export const createCustomerPortal = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error("Create customer portal error:", err);
+    console.error("Create customer portal error:", err.message);
+    
+    // Handle specific Stripe errors
+    if (err.type === 'StripeInvalidRequestError') {
+      if (err.message.includes('portal configuration')) {
+        return res.status(500).json({
+          success: false,
+          error: "Billing portal not configured. Please configure it in Stripe Dashboard."
+        });
+      }
+      if (err.message.includes('No such customer')) {
+        return res.status(400).json({
+          success: false,
+          error: "Stripe customer not found. Please contact support."
+        });
+      }
+    }
+    
     res.status(500).json({
       success: false,
       error: "Failed to create customer portal session"

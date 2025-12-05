@@ -157,10 +157,13 @@ export default function Settings() {
       const data = await createCustomerPortal();
       window.location.href = data.url;
     } catch (error) {
+      const errorMessage = error.response?.data?.error;
       if (error.response?.status === 400) {
-        setError('No active subscription found. Subscribe to a plan first to manage billing.');
+        setError(errorMessage || 'No active subscription found. Subscribe to a plan first to manage billing.');
+      } else if (error.response?.status === 404) {
+        setError('User not found. Please log in again.');
       } else {
-        setError('Failed to open billing portal');
+        setError(errorMessage || 'Failed to access customer portal. Please try again.');
       }
     }
   };
